@@ -4,8 +4,8 @@
              "application/octet-stream",
              "inode/directory"
          ],
-        "Name": "ownCloud Actions",
-        "Description": "Overlay icon for owncloud",
+        "Name": "OpenCloud Overlay",
+        "Description": "Overlay icon for OpenCloud",
         "ServiceTypes": [
             "KFileItemAction/Plugin"
         ]
