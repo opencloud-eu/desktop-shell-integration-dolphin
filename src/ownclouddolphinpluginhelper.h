@@ -23,9 +23,9 @@
 #include <QLocalSocket>
 #include <QRegularExpression>
 #include <QPixmap>
-#include "ownclouddolphinpluginhelper_export.h"
+#include "openclouddolphinpluginhelper_export.h"
 
-class OWNCLOUDDOLPHINPLUGINHELPER_EXPORT OwncloudDolphinPluginHelper : public QObject {
+class OPENCLOUDDOLPHINPLUGINHELPER_EXPORT OwncloudDolphinPluginHelper : public QObject {
     Q_OBJECT
 public:
     static OwncloudDolphinPluginHelper *instance();
@@ -38,7 +38,7 @@ public:
 
     QString contextMenuTitle() const
     {
-        return _strings.value("CONTEXT_MENU_TITLE", QStringLiteral("ownCloud"));
+        return _strings.value("CONTEXT_MENU_TITLE", QStringLiteral("OpenCloud"));
     }
     QString shareActionTitle() const
     {

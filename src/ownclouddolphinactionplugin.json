@@ -4,8 +4,8 @@
             "application/octet-stream",
             "inode/directory"
         ],
-        "Name": "@APPLICATION_NAME@Action",
-        "Description": "ownCloud File Actions",
+        "Name": "OpenCloudAction",
+        "Description": "OpenCloud File Actions",
         "ServiceTypes": [
             "KFileItemAction/Plugin"
         ]

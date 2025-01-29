@@ -26,7 +26,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
-Q_LOGGING_CATEGORY(lcPluginHelper, "owncloud.dolphin", QtInfoMsg)
+Q_LOGGING_CATEGORY(lcPluginHelper, "opencloud.dolphin", QtInfoMsg)
 
 OwncloudDolphinPluginHelper* OwncloudDolphinPluginHelper::instance()
 {
@@ -86,7 +86,7 @@ void OwncloudDolphinPluginHelper::tryConnect()
     }
 
     QString socketPath = QStandardPaths::locate(QStandardPaths::RuntimeLocation,
-                                                QStringLiteral(APPLICATION_SHORTNAME),
+                                                QStringLiteral("OpenCloud"),
                                                 QStandardPaths::LocateDirectory);
     if(socketPath.isEmpty())
         return;

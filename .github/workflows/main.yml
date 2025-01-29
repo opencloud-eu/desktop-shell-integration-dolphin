@@ -14,7 +14,7 @@ jobs:
       - name: Checkout resources
         uses: actions/checkout@v4
         with:
-          repository: owncloud/client-desktop-shell-integration-resources
+          repository: opencloud-eu/desktop-shell-integration-resources
           path: resources
 
       - name: Install dependencies
