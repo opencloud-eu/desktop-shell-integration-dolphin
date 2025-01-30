@@ -144,4 +144,3 @@ QList<QAction *> OwncloudDolphinPluginAction::legacyActions(const KFileItemListP
 }
 
 #include "ownclouddolphinactionplugin.moc"
-#include "moc_ownclouddolphinactionplugin.cpp"
