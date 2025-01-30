@@ -12,7 +12,6 @@ target_link_libraries(openclouddolphinoverlayplugin KF6::CoreAddons KF6::KIOCore
 
 #---ACTION PLUGIN---
 kcoreaddons_add_plugin(openclouddolphinactionplugin SOURCES ownclouddolphinactionplugin.cpp INSTALL_NAMESPACE "kf6/kfileitemaction")
-
 target_link_libraries(openclouddolphinactionplugin KF6::CoreAddons KF6::KIOCore KF6::KIOWidgets openclouddolphinpluginhelper)
 
 install(TARGETS openclouddolphinpluginhelper LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
