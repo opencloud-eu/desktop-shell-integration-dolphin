@@ -17,32 +17,33 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA               *
  ******************************************************************************/
 
-#include <QtNetwork/QLocalSocket>
-#include <qcoreevent.h>
-#include <QStandardPaths>
+#include "dolphinpluginhelper.h"
+
 #include <QFile>
-#include <QLoggingCategory>
-#include "ownclouddolphinpluginhelper.h"
-#include <QJsonObject>
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QLoggingCategory>
+#include <QStandardPaths>
+#include <QTimerEvent>
+#include <QtNetwork/QLocalSocket>
 
 Q_LOGGING_CATEGORY(lcPluginHelper, "opencloud.dolphin", QtInfoMsg)
 
-OwncloudDolphinPluginHelper* OwncloudDolphinPluginHelper::instance()
+OpenCloudDolphinPluginHelper* OpenCloudDolphinPluginHelper::instance()
 {
-    static OwncloudDolphinPluginHelper self;
+    static OpenCloudDolphinPluginHelper self;
     return &self;
 }
 
-OwncloudDolphinPluginHelper::OwncloudDolphinPluginHelper()
+OpenCloudDolphinPluginHelper::OpenCloudDolphinPluginHelper()
 {
-    QObject::connect(&_socket, &QLocalSocket::connected, this, &OwncloudDolphinPluginHelper::slotConnected);
-    connect(&_socket, &QLocalSocket::readyRead, this, &OwncloudDolphinPluginHelper::slotReadyRead);
+    QObject::connect(&_socket, &QLocalSocket::connected, this, &OpenCloudDolphinPluginHelper::slotConnected);
+    connect(&_socket, &QLocalSocket::readyRead, this, &OpenCloudDolphinPluginHelper::slotReadyRead);
     _connectTimer.start(45 * 1000, Qt::VeryCoarseTimer, this);
     tryConnect();
 }
 
-void OwncloudDolphinPluginHelper::timerEvent(QTimerEvent *e)
+void OpenCloudDolphinPluginHelper::timerEvent(QTimerEvent *e)
 {
     if (e->timerId() == _connectTimer.timerId()) {
         tryConnect();
@@ -51,18 +52,18 @@ void OwncloudDolphinPluginHelper::timerEvent(QTimerEvent *e)
     QObject::timerEvent(e);
 }
 
-bool OwncloudDolphinPluginHelper::isConnected() const
+bool OpenCloudDolphinPluginHelper::isConnected() const
 {
     return _socket.state() == QLocalSocket::ConnectedState;
 }
 
-void OwncloudDolphinPluginHelper::sendCommand(const QByteArray& data)
+void OpenCloudDolphinPluginHelper::sendCommand(const QByteArray& data)
 {
     _socket.write(data);
     _socket.flush();
 }
 
-void OwncloudDolphinPluginHelper::sendGetClientIconCommand(int size)
+void OpenCloudDolphinPluginHelper::sendGetClientIconCommand(int size)
 {
     const QByteArray cmd{"V2/GET_CLIENT_ICON:"};
     const QByteArray newLine{"\n"};
@@ -73,13 +74,13 @@ void OwncloudDolphinPluginHelper::sendGetClientIconCommand(int size)
     sendCommand(cmd + json + newLine);
 }
 
-void OwncloudDolphinPluginHelper::slotConnected()
+void OpenCloudDolphinPluginHelper::slotConnected()
 {
     sendCommand("VERSION:\n");
     sendCommand("GET_STRINGS:\n");
 }
 
-void OwncloudDolphinPluginHelper::tryConnect()
+void OpenCloudDolphinPluginHelper::tryConnect()
 {
     if (_socket.state() != QLocalSocket::UnconnectedState) {
         return;
@@ -94,7 +95,7 @@ void OwncloudDolphinPluginHelper::tryConnect()
     _socket.connectToServer(socketPath + QLatin1String("/socket"));
 }
 
-void OwncloudDolphinPluginHelper::slotReadyRead()
+void OpenCloudDolphinPluginHelper::slotReadyRead()
 {
     while (_socket.bytesAvailable()) {
         _line += _socket.readLine();
@@ -165,4 +166,3 @@ void OwncloudDolphinPluginHelper::slotReadyRead()
         Q_EMIT commandReceived(line);
     }
 }
-

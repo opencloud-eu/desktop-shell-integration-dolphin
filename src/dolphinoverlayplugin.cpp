@@ -24,9 +24,9 @@
 #include <QDir>
 #include <QTimer>
 
-#include "ownclouddolphinpluginhelper.h"
+#include "dolphinpluginhelper.h"
 
-class OwncloudDolphinPlugin : public KOverlayIconPlugin
+class OpenCloudDolphinPlugin : public KOverlayIconPlugin
 {
     Q_PLUGIN_METADATA(IID "eu.opencloud.ovarlayiconplugin")
     Q_OBJECT
@@ -36,14 +36,14 @@ class OwncloudDolphinPlugin : public KOverlayIconPlugin
 
 public:
 
-    OwncloudDolphinPlugin() {
-        auto helper = OwncloudDolphinPluginHelper::instance();
-        QObject::connect(helper, &OwncloudDolphinPluginHelper::commandReceived,
-                         this, &OwncloudDolphinPlugin::slotCommandReceived);
+    OpenCloudDolphinPlugin() {
+        auto helper = OpenCloudDolphinPluginHelper::instance();
+        QObject::connect(helper, &OpenCloudDolphinPluginHelper::commandReceived,
+                         this, &OpenCloudDolphinPlugin::slotCommandReceived);
     }
 
     QStringList getOverlays(const QUrl& url) override {
-        auto helper = OwncloudDolphinPluginHelper::instance();
+        auto helper = OpenCloudDolphinPluginHelper::instance();
         if (!helper->isConnected())
             return QStringList();
         if (!url.isLocalFile())
@@ -101,4 +101,4 @@ private:
     }
 };
 
-#include "ownclouddolphinoverlayplugin.moc"
+#include "dolphinoverlayplugin.moc"
