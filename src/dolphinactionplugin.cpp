@@ -29,21 +29,21 @@
 #include <QTimer>
 #include <QEventLoop>
 
-#include "ownclouddolphinpluginhelper.h"
-#include "ownclouddolphinactionplugin.h"
+#include "dolphinpluginhelper.h"
+#include "dolphinactionplugin.h"
 
 
-K_PLUGIN_CLASS_WITH_JSON(OwncloudDolphinPluginAction, "ownclouddolphinactionplugin.json")
+K_PLUGIN_CLASS_WITH_JSON(OpenCloudDolphinPluginAction, "dolphinactionplugin.json")
 
-OwncloudDolphinPluginAction::OwncloudDolphinPluginAction(QObject* parent, const QList<QVariant>&)
+OpenCloudDolphinPluginAction::OpenCloudDolphinPluginAction(QObject* parent, const QList<QVariant>&)
     : KAbstractFileItemActionPlugin(parent)
 {
 
 }
 
-QList<QAction*> OwncloudDolphinPluginAction::actions(const KFileItemListProperties& fileItemInfos, QWidget* parentWidget)
+QList<QAction*> OpenCloudDolphinPluginAction::actions(const KFileItemListProperties& fileItemInfos, QWidget* parentWidget)
 {
-    auto helper = OwncloudDolphinPluginHelper::instance();
+    auto helper = OpenCloudDolphinPluginHelper::instance();
     if (!helper->isConnected() || !fileItemInfos.isLocal())
         return {};
 
@@ -70,7 +70,7 @@ QList<QAction*> OwncloudDolphinPluginAction::actions(const KFileItemListProperti
 
     auto menu = new QMenu(parentWidget);
     QEventLoop loop;
-    auto con = connect(helper, &OwncloudDolphinPluginHelper::commandReceived, this, [&](const QByteArray &cmd) {
+    auto con = connect(helper, &OpenCloudDolphinPluginHelper::commandReceived, this, [&](const QByteArray &cmd) {
         if (cmd.startsWith("GET_MENU_ITEMS:END")) {
             loop.quit();
         } else if (cmd.startsWith("MENU_ITEM:")) {
@@ -109,14 +109,14 @@ QList<QAction*> OwncloudDolphinPluginAction::actions(const KFileItemListProperti
 }
 
 
-QList<QAction *> OwncloudDolphinPluginAction::legacyActions(const KFileItemListProperties &fileItemInfos, QWidget *parentWidget)
+QList<QAction *> OpenCloudDolphinPluginAction::legacyActions(const KFileItemListProperties &fileItemInfos, QWidget *parentWidget)
 {
     QList<QUrl> urls = fileItemInfos.urlList();
     if (urls.count() != 1)
         return {};
     QDir localPath(urls.first().toLocalFile());
     auto localFile = localPath.canonicalPath();
-    auto helper = OwncloudDolphinPluginHelper::instance();
+    auto helper = OpenCloudDolphinPluginHelper::instance();
     auto menuaction = new QAction(parentWidget);
     menuaction->setText(helper->contextMenuTitle());
     auto menu = new QMenu(parentWidget);
@@ -143,4 +143,4 @@ QList<QAction *> OwncloudDolphinPluginAction::legacyActions(const KFileItemListP
     return { menuaction };
 }
 
-#include "ownclouddolphinactionplugin.moc"
+#include "dolphinactionplugin.moc"

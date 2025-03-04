@@ -25,10 +25,10 @@
 #include <QPixmap>
 #include "openclouddolphinpluginhelper_export.h"
 
-class OPENCLOUDDOLPHINPLUGINHELPER_EXPORT OwncloudDolphinPluginHelper : public QObject {
+class OPENCLOUDDOLPHINPLUGINHELPER_EXPORT OpenCloudDolphinPluginHelper : public QObject {
     Q_OBJECT
 public:
-    static OwncloudDolphinPluginHelper *instance();
+    static OpenCloudDolphinPluginHelper *instance();
 
     bool isConnected() const;
     void sendCommand(const QByteArray&);
@@ -61,7 +61,7 @@ protected:
     void timerEvent(QTimerEvent*) override;
 
 private:
-    OwncloudDolphinPluginHelper();
+    OpenCloudDolphinPluginHelper();
     void slotConnected();
     void slotReadyRead();
     void tryConnect();
