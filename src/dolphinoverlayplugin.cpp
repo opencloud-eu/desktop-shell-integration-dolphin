@@ -78,6 +78,12 @@ private:
         if (status.contains("+SWM"))
             r.append(QStringLiteral("document-share"));
 
+        if (status.contains("+VIRT")) // virtual file
+            r.append(QStringLiteral("cloudstatus"));
+        if (status.contains("+AL")) // available locally
+            r.append(QStringLiteral("anchor"));
+        if (status.contains("+OO")) // only online
+            r.append(QStringLiteral("bqm-remove"));
         return r;
     }
 
