@@ -25,13 +25,15 @@
 #include <QPixmap>
 #include "openclouddolphinpluginhelper_export.h"
 
+typedef QHash<QByteArray, QByteArray> StatusMap;
+
 class OPENCLOUDDOLPHINPLUGINHELPER_EXPORT OpenCloudDolphinPluginHelper : public QObject {
     Q_OBJECT
 public:
     static OpenCloudDolphinPluginHelper *instance();
 
     bool isConnected() const;
-    void sendCommand(const QByteArray&);
+    bool sendCommand(const QByteArray&);
     void sendGetClientIconCommand(int size);
 
     QVector<QString> paths() const { return _paths; }
@@ -54,11 +56,11 @@ public:
 
     QByteArray version() { return _version; }
 
+    StatusMap& statusCache() { return m_status; }
+    void putInStatusCache(const QByteArray& file, const QByteArray& status);
+
 Q_SIGNALS:
     void commandReceived(const QByteArray &cmd);
-
-protected:
-    void timerEvent(QTimerEvent*) override;
 
 private:
     OpenCloudDolphinPluginHelper();
@@ -68,10 +70,12 @@ private:
     QLocalSocket _socket;
     QByteArray _line;
     QVector<QString> _paths;
-    QBasicTimer _connectTimer;
 
     QMap<QByteArray, QString> _strings;
     QByteArray _version;
     QPixmap _clientIcon;
+    QTimer *_connectTimer;
     int _msgId = 1;
+
+    StatusMap m_status;
 };

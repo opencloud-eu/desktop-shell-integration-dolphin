@@ -65,7 +65,7 @@ QList<QAction*> OpenCloudDolphinPluginAction::actions(const KFileItemListPropert
     }
 
     if (helper->version() < "1.1") { // in this case, lexicographic order works
-        return legacyActions(fileItemInfos, parentWidget);
+       return legacyActions(fileItemInfos, parentWidget);
     }
 
     auto menu = new QMenu(parentWidget);

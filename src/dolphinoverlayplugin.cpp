@@ -24,15 +24,17 @@
 #include <QDir>
 #include <QTimer>
 
+#include <algorithm>
+#include <iostream>
+
 #include "dolphinpluginhelper.h"
+
+using namespace Qt::StringLiterals;
 
 class OpenCloudDolphinPlugin : public KOverlayIconPlugin
 {
     Q_PLUGIN_METADATA(IID "eu.opencloud.ovarlayiconplugin")
     Q_OBJECT
-
-    typedef QHash<QByteArray, QByteArray> StatusMap;
-    StatusMap m_status;
 
 public:
 
@@ -44,18 +46,36 @@ public:
 
     QStringList getOverlays(const QUrl& url) override {
         auto helper = OpenCloudDolphinPluginHelper::instance();
-        if (!helper->isConnected())
-            return QStringList();
-        if (!url.isLocalFile())
-            return QStringList();
-        QDir localPath(url.toLocalFile());
-        const QByteArray localFile = localPath.canonicalPath().toUtf8();
 
-        helper->sendCommand("RETRIEVE_FILE_STATUS:" + localFile + "\n");
+        // std::cout << "start of " << url.toLocalFile().toStdString() << std::endl;
 
-        StatusMap::iterator it = m_status.find(localFile);
-        if (it != m_status.constEnd()) {
-            return  overlaysForString(*it);
+        if (!helper->isConnected()) {
+            std::cerr << "helper is not connected!" << std::endl;
+            return QStringList();
+        }
+        if (!url.isLocalFile()) {
+            return QStringList();
+        }
+
+        const QDir localPath(url.toLocalFile());
+        const QString cleanLocalPath{localPath.canonicalPath()};
+
+        // check if the file to get Overlays for is actually part of a synced dir
+        const QStringList syncPaths = helper->paths();
+        if (std::ranges::find_if(syncPaths, [cleanLocalPath](const QString& syncPath) {
+                                 return cleanLocalPath.startsWith(syncPath);
+            }) == syncPaths.cend() ) {
+            // std::cout << "Not in Sync Dir" << cleanLocalPath.toStdString() << std::endl;
+            return QStringList();
+        };
+
+        if (helper->sendCommand("RETRIEVE_FILE_STATUS:"_ba + cleanLocalPath.toUtf8() + "\n")) {
+            const auto cache = helper->statusCache();
+            StatusMap::const_iterator it = cache.find(cleanLocalPath.toUtf8());
+            if (it != cache.constEnd()) {
+                // return from cache for now
+                return overlaysForString(*it);
+            }
         }
         return QStringList();
     }
@@ -63,40 +83,52 @@ public:
 private:
     QStringList overlaysForString(const QByteArray &status) {
         QStringList r;
-        if (status.startsWith("NOP"))
+        if (status.startsWith("NOP"_ba))
             return r;
 
-        if (status.startsWith("OK"))
-            r.append(QStringLiteral("vcs-normal"));
-        if (status.startsWith("SYNC") || status.startsWith("NEW"))
-            r.append(QStringLiteral("vcs-update-required"));
-        if (status.startsWith("IGNORE") || status.startsWith("WARN"))
-            r.append(QStringLiteral("vcs-locally-modified-unstaged"));
-        if (status.startsWith("ERROR"))
-            r.append(QStringLiteral("vcs-conflicting"));
-
-        if (status.contains("+SWM"))
-            r.append(QStringLiteral("document-share"));
+        if (status.startsWith("OK"_ba)) {
+            r.append(u"vcs-normal"_s);
+        }
+        if (status.startsWith("SYNC"_ba) || status.startsWith("NEW"_ba)) {
+            r.append(u"vcs-update-required"_s);
+        }
+        if (status.startsWith("IGNORE"_ba) || status.startsWith("WARN"_ba)) {
+            r.append(u"vcs-locally-modified-unstaged"_s);
+        }
+        if (status.startsWith("ERROR"_ba)) {
+            r.append(u"vcs-conflicting"_s);
+        }
+        if (status.contains("+SWM")) {
+            r.append(u"document-share"_s);
+        }
 
         return r;
     }
 
     void slotCommandReceived(const QByteArray &line) {
-
         QList<QByteArray> tokens = line.split(':');
         if (tokens.count() != 3)
             return;
-        if (tokens[0] != "STATUS" && tokens[0] != "BROADCAST")
+        if (tokens[0] != "STATUS"_ba && tokens[0] != "BROADCAST"_ba)
             return;
         if (tokens[2].isEmpty())
             return;
 
-        const QByteArray name = tokens[2];
-        QByteArray &status = m_status[name]; // reference to the item in the hash
-        if (status == tokens[1])
-            return;
-        status = tokens[1];
+        // std::cout << "received " << line.data() << std::endl;
 
+
+        auto helper = OpenCloudDolphinPluginHelper::instance();
+        const QByteArray name = tokens[2];
+        const QByteArray status = tokens[1];
+        // check if the status was in the cache before, and return if nothing has
+        // changed.
+        const auto cache = helper->statusCache();
+        if (cache.contains(name) && cache[name] == status) {
+            return;
+        }
+
+        // ...otherwise remember the status in the cache
+        helper->putInStatusCache(name, status);
         Q_EMIT overlaysChanged(QUrl::fromLocalFile(QString::fromUtf8(name)), overlaysForString(status));
     }
 };
