@@ -19,6 +19,9 @@
 
 #include "dolphinpluginhelper.h"
 
+#include <iostream>
+
+
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -26,8 +29,15 @@
 #include <QStandardPaths>
 #include <QTimerEvent>
 #include <QtNetwork/QLocalSocket>
+#include <QTimer>
 
 Q_LOGGING_CATEGORY(lcPluginHelper, "opencloud.dolphin", QtInfoMsg)
+
+using namespace Qt::StringLiterals;
+
+namespace {
+const int CacheMaxEntries{1000};
+}
 
 OpenCloudDolphinPluginHelper* OpenCloudDolphinPluginHelper::instance()
 {
@@ -39,17 +49,18 @@ OpenCloudDolphinPluginHelper::OpenCloudDolphinPluginHelper()
 {
     QObject::connect(&_socket, &QLocalSocket::connected, this, &OpenCloudDolphinPluginHelper::slotConnected);
     connect(&_socket, &QLocalSocket::readyRead, this, &OpenCloudDolphinPluginHelper::slotReadyRead);
-    _connectTimer.start(45 * 1000, Qt::VeryCoarseTimer, this);
-    tryConnect();
-}
 
-void OpenCloudDolphinPluginHelper::timerEvent(QTimerEvent *e)
-{
-    if (e->timerId() == _connectTimer.timerId()) {
+    _connectTimer = new QTimer(this);
+
+    connect(_connectTimer, &QTimer::timeout, [this]() {
         tryConnect();
-        return;
-    }
-    QObject::timerEvent(e);
+
+        // clear the cache, just to refresh it
+        m_status.clear();
+    });
+    _connectTimer->start(std::chrono::seconds(45));
+
+    tryConnect();
 }
 
 bool OpenCloudDolphinPluginHelper::isConnected() const
@@ -57,10 +68,14 @@ bool OpenCloudDolphinPluginHelper::isConnected() const
     return _socket.state() == QLocalSocket::ConnectedState;
 }
 
-void OpenCloudDolphinPluginHelper::sendCommand(const QByteArray& data)
+bool OpenCloudDolphinPluginHelper::sendCommand(const QByteArray& data)
 {
-    _socket.write(data);
-    _socket.flush();
+    if (isConnected()) {
+        _socket.write(data);
+        _socket.flush();
+        return true;
+    }
+    return false;
 }
 
 void OpenCloudDolphinPluginHelper::sendGetClientIconCommand(int size)
@@ -87,12 +102,19 @@ void OpenCloudDolphinPluginHelper::tryConnect()
     }
 
     QString socketPath = QStandardPaths::locate(QStandardPaths::RuntimeLocation,
-                                                QStringLiteral("OpenCloud"),
+                                                u"OpenCloud"_s,
                                                 QStandardPaths::LocateDirectory);
-    if(socketPath.isEmpty())
+    if(socketPath.isEmpty()) {
+        std::cerr << "Socket path is not avialable";
         return;
+    }
 
-    _socket.connectToServer(socketPath + QLatin1String("/socket"));
+    socketPath.append(u"/socket"_s);
+    if (! QFile::exists(socketPath)) {
+        std::cerr << "Socket " << socketPath.toStdString() << " is not available ";
+        return;
+    }
+    _socket.connectToServer(socketPath);
 }
 
 void OpenCloudDolphinPluginHelper::slotReadyRead()
@@ -116,17 +138,17 @@ void OpenCloudDolphinPluginHelper::slotReadyRead()
         // rest of line contains the information
         const QByteArray info = line.mid(firstColon + 1);
 
-        if (command == QByteArrayLiteral("REGISTER_PATH")) {
+        if (command == "REGISTER_PATH"_ba) {
             const QString file = QString::fromUtf8(info);
             _paths.append(file);
             continue;
-        } else if (command == QByteArrayLiteral("STRING")) {
+        } else if (command == "STRING"_ba) {
             auto args = QString::fromUtf8(info).split(QLatin1Char(':'));
             if (args.size() >= 2) {
                 _strings[args[0].toUtf8()] = args.mid(1).join(QLatin1Char(':'));
             }
             continue;
-        } else if (command == QByteArrayLiteral("VERSION")) {
+        } else if (command == "VERSION"_ba) {
             auto args = info.split(':');
             if (args.size() >= 2) {
                 auto version = args.value(1);
@@ -134,11 +156,11 @@ void OpenCloudDolphinPluginHelper::slotReadyRead()
             }
             if (!_version.startsWith("1.")) {
                 // Incompatible version, disconnect forever
-                _connectTimer.stop();
+                _connectTimer->stop();
                 _socket.disconnectFromServer();
                 return;
             }
-        } else if (command == QByteArrayLiteral("V2/GET_CLIENT_ICON_RESULT")) {
+        } else if (command == "V2/GET_CLIENT_ICON_RESULT"_ba) {
             QJsonParseError error;
             auto json = QJsonDocument::fromJson(info, &error).object();
             if (error.error != QJsonParseError::NoError) {
@@ -164,5 +186,13 @@ void OpenCloudDolphinPluginHelper::slotReadyRead()
         }
 
         Q_EMIT commandReceived(line);
+    }
+}
+
+void OpenCloudDolphinPluginHelper::putInStatusCache(const QByteArray& file, const QByteArray& status)
+{
+    // Do not let the cache grow infinite...
+    if (m_status.count() < CacheMaxEntries) {
+        m_status.insertOrAssign(file, status);
     }
 }
