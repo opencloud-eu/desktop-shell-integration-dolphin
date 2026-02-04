@@ -82,14 +82,14 @@ QList<QAction*> OpenCloudDolphinPluginAction::actions(const KFileItemListPropert
                 action->setDisabled(true);
             auto call = args.value(1).toLatin1();
             connect(action, &QAction::triggered, [helper, call, files] {
-                helper->sendCommand(QByteArray(call + ":" + files + "\n"));
+                helper->sendCommand(QByteArray(call + ":" + files));
             });
         } else if (cmd.startsWith("MENU_SEPARATOR:")) {
             menu->addSeparator();
         }
     });
     QTimer::singleShot(500, &loop, SLOT(quit())); // add a timeout to be sure we don't freeze dolphin
-    helper->sendCommand(QByteArray("GET_MENU_ITEMS:" + files + "\n"));
+    helper->sendCommand(QByteArray("GET_MENU_ITEMS:" + files));
 
     helper->sendGetClientIconCommand(16); // get client icon with size 16x16
 
@@ -124,20 +124,20 @@ QList<QAction *> OpenCloudDolphinPluginAction::legacyActions(const KFileItemList
 
     auto shareAction = menu->addAction(helper->shareActionTitle());
     connect(shareAction, &QAction::triggered, this, [localFile, helper] {
-        helper->sendCommand(QByteArray("SHARE:" + localFile.toUtf8() + "\n"));
+        helper->sendCommand(QByteArray("SHARE:" + localFile.toUtf8()));
     });
 
     if (!helper->copyPrivateLinkTitle().isEmpty()) {
         auto copyPrivateLinkAction = menu->addAction(helper->copyPrivateLinkTitle());
         connect(copyPrivateLinkAction, &QAction::triggered, this, [localFile, helper] {
-            helper->sendCommand(QByteArray("COPY_PRIVATE_LINK:" + localFile.toUtf8() + "\n"));
+            helper->sendCommand(QByteArray("COPY_PRIVATE_LINK:" + localFile.toUtf8()));
         });
     }
 
     if (!helper->emailPrivateLinkTitle().isEmpty()) {
         auto emailPrivateLinkAction = menu->addAction(helper->emailPrivateLinkTitle());
         connect(emailPrivateLinkAction, &QAction::triggered, this, [localFile, helper] {
-            helper->sendCommand(QByteArray("EMAIL_PRIVATE_LINK:" + localFile.toUtf8() + "\n"));
+            helper->sendCommand(QByteArray("EMAIL_PRIVATE_LINK:" + localFile.toUtf8()));
         });
     }
     return { menuaction };

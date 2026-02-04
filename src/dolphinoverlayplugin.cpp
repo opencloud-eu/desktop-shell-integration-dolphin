@@ -69,7 +69,7 @@ public:
             return QStringList();
         };
 
-        if (helper->sendCommand("RETRIEVE_FILE_STATUS:"_ba + cleanLocalPath.toUtf8() + "\n")) {
+        if (helper->sendCommand("RETRIEVE_FILE_STATUS:"_ba + cleanLocalPath.toUtf8())) {
             const auto cache = helper->statusCache();
             StatusMap::const_iterator it = cache.find(cleanLocalPath.toUtf8());
             if (it != cache.constEnd()) {
