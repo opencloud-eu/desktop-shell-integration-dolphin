@@ -46,11 +46,10 @@ OpenCloudDolphinPluginHelper* OpenCloudDolphinPluginHelper::instance()
 }
 
 OpenCloudDolphinPluginHelper::OpenCloudDolphinPluginHelper()
+    : _connectTimer{ new QTimer(this) }
 {
     QObject::connect(&_socket, &QLocalSocket::connected, this, &OpenCloudDolphinPluginHelper::slotConnected);
     connect(&_socket, &QLocalSocket::readyRead, this, &OpenCloudDolphinPluginHelper::slotReadyRead);
-
-    _connectTimer = new QTimer(this);
 
     connect(_connectTimer, &QTimer::timeout, [this]() {
         tryConnect();
