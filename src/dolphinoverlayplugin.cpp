@@ -47,8 +47,6 @@ public:
     QStringList getOverlays(const QUrl& url) override {
         auto helper = OpenCloudDolphinPluginHelper::instance();
 
-        // std::cout << "start of " << url.toLocalFile().toStdString() << std::endl;
-
         if (!helper->isConnected()) {
             std::cerr << "helper is not connected!" << std::endl;
             return QStringList();
@@ -65,7 +63,6 @@ public:
         if (std::ranges::find_if(syncPaths, [cleanLocalPath](const QString& syncPath) {
                                  return cleanLocalPath.startsWith(syncPath);
             }) == syncPaths.cend() ) {
-            // std::cout << "Not in Sync Dir" << cleanLocalPath.toStdString() << std::endl;
             return QStringList();
         };
 
@@ -113,9 +110,6 @@ private:
             return;
         if (tokens[2].isEmpty())
             return;
-
-        // std::cout << "received " << line.data() << std::endl;
-
 
         auto helper = OpenCloudDolphinPluginHelper::instance();
         const QByteArray name = tokens[2];
