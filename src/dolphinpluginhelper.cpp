@@ -70,8 +70,13 @@ bool OpenCloudDolphinPluginHelper::isConnected() const
 
 bool OpenCloudDolphinPluginHelper::sendCommand(const QByteArray& data)
 {
+    QByteArray da{data};
+    if (!da.endsWith("\n")) {
+        da.append("\n");
+    }
+
     if (isConnected()) {
-        _socket.write(data);
+        _socket.write(da);
         _socket.flush();
         return true;
     }
@@ -81,18 +86,17 @@ bool OpenCloudDolphinPluginHelper::sendCommand(const QByteArray& data)
 void OpenCloudDolphinPluginHelper::sendGetClientIconCommand(int size)
 {
     const QByteArray cmd{"V2/GET_CLIENT_ICON:"};
-    const QByteArray newLine{"\n"};
     const QJsonObject args { { QStringLiteral("size"), size } };
     const QJsonObject obj { { QStringLiteral("id"), QString::number(_msgId++) }, { QStringLiteral("arguments"), args } };
     const auto json = QJsonDocument(obj).toJson(QJsonDocument::Compact);
 
-    sendCommand(cmd + json + newLine);
+    sendCommand(cmd + json);
 }
 
 void OpenCloudDolphinPluginHelper::slotConnected()
 {
-    sendCommand("VERSION:\n");
-    sendCommand("GET_STRINGS:\n");
+    sendCommand("VERSION:");
+    sendCommand("GET_STRINGS:");
 }
 
 void OpenCloudDolphinPluginHelper::tryConnect()
