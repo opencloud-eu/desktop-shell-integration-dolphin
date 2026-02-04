@@ -23,9 +23,11 @@
 #include <QLocalSocket>
 #include <QRegularExpression>
 #include <QPixmap>
+#include <QCache>
+
 #include "openclouddolphinpluginhelper_export.h"
 
-typedef QHash<QByteArray, QByteArray> StatusMap;
+typedef QCache<QByteArray, QByteArray> StatusMap;
 
 class OPENCLOUDDOLPHINPLUGINHELPER_EXPORT OpenCloudDolphinPluginHelper : public QObject {
     Q_OBJECT
@@ -56,7 +58,7 @@ public:
 
     QByteArray version() { return _version; }
 
-    StatusMap& statusCache() { return m_status; }
+    QByteArray statusFromCache(const QByteArray& file);
     void putInStatusCache(const QByteArray& file, const QByteArray& status);
 
 Q_SIGNALS:
@@ -77,5 +79,5 @@ private:
     QTimer *_connectTimer;
     int _msgId = 1;
 
-    StatusMap m_status;
+    StatusMap m_statusCache;
 };

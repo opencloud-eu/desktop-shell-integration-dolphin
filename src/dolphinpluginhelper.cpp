@@ -35,10 +35,6 @@ Q_LOGGING_CATEGORY(lcPluginHelper, "opencloud.dolphin", QtInfoMsg)
 
 using namespace Qt::StringLiterals;
 
-namespace {
-const int CacheMaxEntries{1000};
-}
-
 OpenCloudDolphinPluginHelper* OpenCloudDolphinPluginHelper::instance()
 {
     static OpenCloudDolphinPluginHelper self;
@@ -53,9 +49,6 @@ OpenCloudDolphinPluginHelper::OpenCloudDolphinPluginHelper()
 
     connect(_connectTimer, &QTimer::timeout, [this]() {
         tryConnect();
-
-        // clear the cache, just to refresh it
-        m_status.clear();
     });
     _connectTimer->start(std::chrono::seconds(45));
 
@@ -194,8 +187,19 @@ void OpenCloudDolphinPluginHelper::slotReadyRead()
 
 void OpenCloudDolphinPluginHelper::putInStatusCache(const QByteArray& file, const QByteArray& status)
 {
-    // Do not let the cache grow infinite...
-    if (m_status.count() < CacheMaxEntries) {
-        m_status.insertOrAssign(file, status);
+    m_statusCache.insert(file, new QByteArray(status));
+}
+
+QByteArray OpenCloudDolphinPluginHelper::statusFromCache(const QByteArray& file)
+{
+    if (file.isEmpty()) {
+        return "NOP"_ba;
     }
+
+    QByteArray *p = m_statusCache[file];
+
+    if (p != nullptr) {
+        return *p;
+    }
+    return ""_ba;
 }

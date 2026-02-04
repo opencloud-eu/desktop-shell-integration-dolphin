@@ -22,7 +22,6 @@
 #include <QLocalSocket>
 #include <KFileItem>
 #include <QDir>
-#include <QTimer>
 
 #include <algorithm>
 #include <iostream>
@@ -67,11 +66,11 @@ public:
         };
 
         if (helper->sendCommand("RETRIEVE_FILE_STATUS:"_ba + cleanLocalPath.toUtf8())) {
-            const auto cache = helper->statusCache();
-            StatusMap::const_iterator it = cache.find(cleanLocalPath.toUtf8());
-            if (it != cache.constEnd()) {
+            auto stat = helper->statusFromCache(cleanLocalPath.toUtf8());
+
+            if (!stat.isEmpty()) {
                 // return from cache for now
-                return overlaysForString(*it);
+                return overlaysForString(stat);
             }
         }
         return QStringList();
@@ -116,8 +115,8 @@ private:
         const QByteArray status = tokens[1];
         // check if the status was in the cache before, and return if nothing has
         // changed.
-        const auto cache = helper->statusCache();
-        if (cache.contains(name) && cache[name] == status) {
+        const auto cacheStatus = helper->statusFromCache(name);
+        if (cacheStatus == status) {
             return;
         }
 
