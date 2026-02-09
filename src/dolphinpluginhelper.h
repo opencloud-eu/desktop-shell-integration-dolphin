@@ -58,7 +58,7 @@ public:
 
     QByteArray version() { return _version; }
 
-    QByteArray statusFromCache(const QByteArray& file);
+    QByteArray statusFromCache(const QByteArray& file) const;
     void putInStatusCache(const QByteArray& file, const QByteArray& status);
 
 Q_SIGNALS:
