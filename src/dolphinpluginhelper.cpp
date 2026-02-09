@@ -29,7 +29,6 @@
 #include <QStandardPaths>
 #include <QTimerEvent>
 #include <QtNetwork/QLocalSocket>
-#include <QTimer>
 
 Q_LOGGING_CATEGORY(lcPluginHelper, "opencloud.dolphin", QtInfoMsg)
 
@@ -42,16 +41,15 @@ OpenCloudDolphinPluginHelper* OpenCloudDolphinPluginHelper::instance()
 }
 
 OpenCloudDolphinPluginHelper::OpenCloudDolphinPluginHelper()
-    : _connectTimer{ new QTimer(this) },
-      m_statusCache(1000)
+    : m_statusCache(1000)
 {
     QObject::connect(&_socket, &QLocalSocket::connected, this, &OpenCloudDolphinPluginHelper::slotConnected);
     connect(&_socket, &QLocalSocket::readyRead, this, &OpenCloudDolphinPluginHelper::slotReadyRead);
 
-    connect(_connectTimer, &QTimer::timeout, [this]() {
+    connect(&_connectTimer, &QTimer::timeout, [this]() {
         tryConnect();
     });
-    _connectTimer->start(std::chrono::seconds(45));
+    _connectTimer.start(std::chrono::seconds(45));
 
     tryConnect();
 }
@@ -153,7 +151,7 @@ void OpenCloudDolphinPluginHelper::slotReadyRead()
             }
             if (!_version.startsWith("1.")) {
                 // Incompatible version, disconnect forever
-                _connectTimer->stop();
+                _connectTimer.stop();
                 _socket.disconnectFromServer();
                 return;
             }

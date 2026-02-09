@@ -24,6 +24,7 @@
 #include <QRegularExpression>
 #include <QPixmap>
 #include <QCache>
+#include <QTimer>
 
 #include "openclouddolphinpluginhelper_export.h"
 
@@ -76,7 +77,7 @@ private:
     QMap<QByteArray, QString> _strings;
     QByteArray _version;
     QPixmap _clientIcon;
-    QTimer *_connectTimer;
+    QTimer _connectTimer;
     int _msgId = 1;
 
     StatusMap m_statusCache;
