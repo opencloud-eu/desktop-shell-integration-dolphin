@@ -42,7 +42,8 @@ OpenCloudDolphinPluginHelper* OpenCloudDolphinPluginHelper::instance()
 }
 
 OpenCloudDolphinPluginHelper::OpenCloudDolphinPluginHelper()
-    : _connectTimer{ new QTimer(this) }
+    : _connectTimer{ new QTimer(this) },
+      m_statusCache(1000)
 {
     QObject::connect(&_socket, &QLocalSocket::connected, this, &OpenCloudDolphinPluginHelper::slotConnected);
     connect(&_socket, &QLocalSocket::readyRead, this, &OpenCloudDolphinPluginHelper::slotReadyRead);
@@ -190,13 +191,13 @@ void OpenCloudDolphinPluginHelper::putInStatusCache(const QByteArray& file, cons
     m_statusCache.insert(file, new QByteArray(status));
 }
 
-QByteArray OpenCloudDolphinPluginHelper::statusFromCache(const QByteArray& file)
+QByteArray OpenCloudDolphinPluginHelper::statusFromCache(const QByteArray& file) const
 {
     if (file.isEmpty()) {
         return "NOP"_ba;
     }
 
-    QByteArray *p = m_statusCache[file];
+    QByteArray *p = m_statusCache.object(file);
 
     if (p != nullptr) {
         return *p;
