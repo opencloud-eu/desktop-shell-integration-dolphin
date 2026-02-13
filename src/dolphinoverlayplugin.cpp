@@ -36,6 +36,15 @@ class OpenCloudDolphinPlugin : public KOverlayIconPlugin
     Q_OBJECT
 
 public:
+    enum class Icon {
+        Cloud,
+        DarkGreenCheckMark,
+        LightGreenCheckMark,
+        Sync,
+        Ignore,
+        Share,
+        Error
+    };
 
     OpenCloudDolphinPlugin() {
         auto helper = OpenCloudDolphinPluginHelper::instance();
@@ -77,25 +86,65 @@ public:
     }
 
 private:
+    // Icon lookup table, just name the icon names
+    const QMap<Icon, QString> _iconMap {
+        {Icon::Cloud, u"foo"_s},
+        {Icon::DarkGreenCheckMark, u"bar"_s},
+        {Icon::LightGreenCheckMark, u"baz"_s},
+        {Icon::Sync,   u"baz"_s},
+        {Icon::Ignore, u"baz"_s},
+        {Icon::Share,  u"baz"_s},
+        {Icon::Error,  u"baz"_s},
+    };
+
+    /*
+     * A typical status string looks like
+     *   "OK+VIRT+AL" -> error free file that is virtual and marked as always local
+     *
+     * The following icons are needed:
+     * - A cloud for virtual files
+     * - A dark green checkmark for files that are locally and marked as always locally
+     * - A light green checkmark for files that are locally but can be freed
+     * - A sync icon: For files with an ongoing sync or new files
+     * - A ignore icon: For warnings and excluded files
+     * - A error icon: For files in error state
+     * - A share icon: For files that additionally show that they're shared.
+     *
+     * that is maximum compatibility with MS Cloud API as described here:
+     * https://support.microsoft.com/en-us/office/what-do-the-onedrive-icons-mean-11143026-8000-44f8-aaa9-67c985aa49b3#id0ebh=windows#ID0EDRBBHBH
+     *
+     */
     QStringList overlaysForString(const QByteArray &status) {
         QStringList r;
         if (status.startsWith("NOP"_ba))
             return r;
 
-        if (status.startsWith("OK"_ba)) {
-            r.append(u"vcs-normal"_s);
+        if (status.startsWith("OK"_ba)) { // File is ok. Check if it is virtual
+            if (status.contains("+VIRT"_ba)) { // virtual marker
+                // the cloud
+                r.append(_iconMap[Icon::Cloud]);
+            } else {
+                // not virutal
+                if (status.contains("+AL"_ba)) { // always-local marker
+                    // dark green checkmark - marked as available online
+                    r.append(_iconMap[Icon::DarkGreenCheckMark]);
+                } else {
+                    // light green checkmark
+                    r.append(_iconMap[Icon::LightGreenCheckMark]);
+                }
+            }
+        } else if (status.startsWith("SYNC"_ba) || status.startsWith("NEW"_ba)) {
+            // status that indicates syncing
+            r.append(_iconMap[Icon::Sync]);
+        } else if (status.startsWith("IGNORE"_ba) || status.startsWith("WARN"_ba)) {
+            r.append(_iconMap[Icon::Ignore]);
+        } else if (status.startsWith("ERROR"_ba)) { // HARD ERROR
+            r.append(_iconMap[Icon::Error]);
         }
-        if (status.startsWith("SYNC"_ba) || status.startsWith("NEW"_ba)) {
-            r.append(u"vcs-update-required"_s);
-        }
-        if (status.startsWith("IGNORE"_ba) || status.startsWith("WARN"_ba)) {
-            r.append(u"vcs-locally-modified-unstaged"_s);
-        }
-        if (status.startsWith("ERROR"_ba)) {
-            r.append(u"vcs-conflicting"_s);
-        }
-        if (status.contains("+SWM")) {
-            r.append(u"document-share"_s);
+
+        // Shared flag comes additionally
+        if (status.contains("+SWM"_ba)) {
+            r.append(_iconMap[Icon::Share]);
         }
 
         return r;
