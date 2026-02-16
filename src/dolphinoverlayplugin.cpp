@@ -86,17 +86,25 @@ public:
     }
 
 private:
-    // Icon lookup table, just name the icon names
-    const QMap<Icon, QString> _iconMap {
-        {Icon::Cloud, u"foo"_s},
-        {Icon::DarkGreenCheckMark, u"bar"_s},
-        {Icon::LightGreenCheckMark, u"baz"_s},
-        {Icon::Sync,   u"baz"_s},
-        {Icon::Ignore, u"baz"_s},
-        {Icon::Share,  u"baz"_s},
-        {Icon::Error,  u"baz"_s},
-    };
-
+    QString overlayIcon(Icon i) const {
+        switch(i) {
+        case Icon::Cloud:
+            return u"foo"_s;
+        case Icon::DarkGreenCheckMark:
+            return u"bar"_s;
+        case Icon::LightGreenCheckMark:
+            return u"baz"_s;
+        case Icon::Sync:
+            return u"bur"_s;
+        case Icon::Ignore:
+            return u"iggn"_s;
+        case Icon::Share:
+            return u"share"_s;
+        case Icon::Error:
+            return u"err"_s;
+        }
+        Q_UNREACHABLE();
+    }
     /*
      * A typical status string looks like
      *   "OK+VIRT+AL" -> error free file that is virtual and marked as always local
@@ -122,29 +130,29 @@ private:
         if (status.startsWith("OK"_ba)) { // File is ok. Check if it is virtual
             if (status.contains("+VIRT"_ba)) { // virtual marker
                 // the cloud
-                r.append(_iconMap[Icon::Cloud]);
+                r.append(overlayIcon(Icon::Cloud));
             } else {
                 // not virutal
                 if (status.contains("+AL"_ba)) { // always-local marker
                     // dark green checkmark - marked as available online
-                    r.append(_iconMap[Icon::DarkGreenCheckMark]);
+                    r.append(overlayIcon(Icon::DarkGreenCheckMark));
                 } else {
                     // light green checkmark
-                    r.append(_iconMap[Icon::LightGreenCheckMark]);
+                    r.append(overlayIcon(Icon::LightGreenCheckMark));
                 }
             }
         } else if (status.startsWith("SYNC"_ba) || status.startsWith("NEW"_ba)) {
             // status that indicates syncing
-            r.append(_iconMap[Icon::Sync]);
+            r.append(overlayIcon(Icon::Sync));
         } else if (status.startsWith("IGNORE"_ba) || status.startsWith("WARN"_ba)) {
-            r.append(_iconMap[Icon::Ignore]);
+            r.append(overlayIcon(Icon::Ignore));
         } else if (status.startsWith("ERROR"_ba)) { // HARD ERROR
-            r.append(_iconMap[Icon::Error]);
+            r.append(overlayIcon(Icon::Error));
         }
 
         // Shared flag comes additionally
         if (status.contains("+SWM"_ba)) {
-            r.append(_iconMap[Icon::Share]);
+            r.append(overlayIcon(Icon::Share));
         }
 
         return r;
