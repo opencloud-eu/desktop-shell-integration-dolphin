@@ -36,6 +36,15 @@ class OpenCloudDolphinPlugin : public KOverlayIconPlugin
     Q_OBJECT
 
 public:
+    enum class Icon {
+        Cloud,
+        DarkGreenCheckMark,
+        LightGreenCheckMark,
+        Sync,
+        Ignore,
+        Share,
+        Error
+    };
 
     OpenCloudDolphinPlugin() {
         auto helper = OpenCloudDolphinPluginHelper::instance();
@@ -77,25 +86,73 @@ public:
     }
 
 private:
+    QString overlayIcon(Icon i) const {
+        switch(i) {
+        case Icon::Cloud:
+            return u"OpenCloud_cloud"_s;
+        case Icon::DarkGreenCheckMark:
+            return u"OpenCloud_ok"_s;
+        case Icon::LightGreenCheckMark:
+            return u"OpenCloud_lightok"_s;
+        case Icon::Sync:
+            return u"OpenCloud_sync"_s;
+        case Icon::Ignore:
+            return u"OpenCloud_warn"_s;
+        case Icon::Share:
+            return u"OpenCloud_share"_s;
+        case Icon::Error:
+            return u"OpenCloud_error"_s;
+        }
+        Q_UNREACHABLE();
+    }
+    /*
+     * A typical status string looks like
+     *   "OK+VIRT+AL" -> error free file that is virtual and marked as always local
+     *
+     * The following icons are needed:
+     * - A cloud for virtual files
+     * - A dark green checkmark for files that are locally and marked as always locally
+     * - A light green checkmark for files that are locally but can be freed
+     * - A sync icon: For files with an ongoing sync or new files
+     * - A ignore icon: For warnings and excluded files
+     * - A error icon: For files in error state
+     * - A share icon: For files that additionally show that they're shared.
+     *
+     * that is maximum compatibility with MS Cloud API as described here:
+     * https://support.microsoft.com/en-us/office/what-do-the-onedrive-icons-mean-11143026-8000-44f8-aaa9-67c985aa49b3#id0ebh=windows#ID0EDRBBHBH
+     *
+     */
     QStringList overlaysForString(const QByteArray &status) {
         QStringList r;
         if (status.startsWith("NOP"_ba))
             return r;
 
-        if (status.startsWith("OK"_ba)) {
-            r.append(u"vcs-normal"_s);
+        if (status.startsWith("OK"_ba)) { // File is ok. Check if it is virtual
+            if (status.contains("+VIRT"_ba)) { // virtual marker
+                // the cloud
+                r.append(overlayIcon(Icon::Cloud));
+            } else {
+                // not virutal
+                if (status.contains("+AL"_ba)) { // always-local marker
+                    // dark green checkmark - marked as available online
+                    r.append(overlayIcon(Icon::DarkGreenCheckMark));
+                } else {
+                    // light green checkmark
+                    r.append(overlayIcon(Icon::LightGreenCheckMark));
+                }
+            }
+        } else if (status.startsWith("SYNC"_ba) || status.startsWith("NEW"_ba)) {
+            // status that indicates syncing
+            r.append(overlayIcon(Icon::Sync));
+        } else if (status.startsWith("IGNORE"_ba) || status.startsWith("WARN"_ba)) {
+            r.append(overlayIcon(Icon::Ignore));
+        } else if (status.startsWith("ERROR"_ba)) { // HARD ERROR
+            r.append(overlayIcon(Icon::Error));
         }
-        if (status.startsWith("SYNC"_ba) || status.startsWith("NEW"_ba)) {
-            r.append(u"vcs-update-required"_s);
-        }
-        if (status.startsWith("IGNORE"_ba) || status.startsWith("WARN"_ba)) {
-            r.append(u"vcs-locally-modified-unstaged"_s);
-        }
-        if (status.startsWith("ERROR"_ba)) {
-            r.append(u"vcs-conflicting"_s);
-        }
-        if (status.contains("+SWM")) {
-            r.append(u"document-share"_s);
+
+        // Shared flag comes additionally
+        if (status.contains("+SWM"_ba)) {
+            r.append(overlayIcon(Icon::Share));
         }
 
         return r;
