@@ -89,19 +89,19 @@ private:
     QString overlayIcon(Icon i) const {
         switch(i) {
         case Icon::Cloud:
-            return u"foo"_s;
+            return u"OpenCloud_cloud"_s;
         case Icon::DarkGreenCheckMark:
-            return u"bar"_s;
+            return u"OpenCloud_ok"_s;
         case Icon::LightGreenCheckMark:
-            return u"baz"_s;
+            return u"OpenCloud_lightok"_s;
         case Icon::Sync:
-            return u"bur"_s;
+            return u"OpenCloud_sync"_s;
         case Icon::Ignore:
-            return u"iggn"_s;
+            return u"OpenCloud_warn"_s;
         case Icon::Share:
-            return u"share"_s;
+            return u"OpenCloud_share"_s;
         case Icon::Error:
-            return u"err"_s;
+            return u"OpenCloud_error"_s;
         }
         Q_UNREACHABLE();
     }
